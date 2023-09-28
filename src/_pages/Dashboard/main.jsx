@@ -2,18 +2,27 @@ import React, { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { UserOutlined,MenuUnfoldOutlined,MenuFoldOutlined,SendOutlined,LogoutOutlined} from '@ant-design/icons';
-import { Layout, Menu, theme ,Button,Empty, Row,Col,FloatButton,Tooltip,Avatar,Input} from 'antd';
+import { Layout, Menu, theme ,Button,Empty, message,Row,Col,FloatButton,Tooltip,Avatar,Input} from 'antd';
 import Chat from './chat';
 import CreateGroup from './createNewGroup';
 import SendText from './sendText';
 import Actions from './actions';
+import UserEdit from '../RegisterLogin/userEdit'
+import ChatArea from './chatArea'
+
+import { USERContext } from "../../_pages/App";
+
+import io from 'socket.io-client';
+
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const Main = () => {
-    
-    const navigate = useNavigate();
-    const [collapsed, setCollapsed] = React.useState(false);
+  // const socket = new WebSocket(`ws://localhost:8000/ws/chat/${groupId}/`);
+  const navigate = useNavigate();
+  const { setUser } = React.useContext(USERContext);    
+  const [collapsed, setCollapsed] = React.useState(false);
+
     const {
         token: { colorBgContainer },
     } = theme.useToken();
@@ -21,13 +30,15 @@ const Main = () => {
     const [GroupInfo, setGroupInfo] = React.useState(null);
     const [Messages, setMessages] = React.useState(null);
   
+  
   const HandleLogout = () => { 
       axios.post("/logout/")
       .then(res => {
-          navigate("/")
-          axios.defaults.headers.common['Authorization'] = "";
+        axios.defaults.headers.common['Authorization'] = "";
+        setUser(null)
           localStorage.removeItem("User")
-      }).catch(err=>err)
+      }).catch(err => err)
+        .finally(() => {navigate("/")})
   }
   
   const getUserGroups = () => {
@@ -46,14 +57,27 @@ const Main = () => {
   const getUserGroupMessages = ({ item, key, keyPath, domEvent }) => {
     // key is group ID
     const group_id = parseInt(key)
-    axios.get(`/group/${group_id}/messages`)
+    axios.get(`/group/${group_id}/messages/`)
       .then(res => {
         setMessages(res?.data?.results)
-        setGroupInfo(group_id)
+        getGroupDetails(group_id)
       })
       .catch(err=>setMessages(null))
   }
-  
+
+  const getGroupDetails = (GID) => {
+    axios.get(`/group/${GID}/`)
+      .then(res => {
+        if (res.data.results.length > 0) setGroupInfo(res.data.results[0])
+        else setGroupInfo(null)
+      })
+      .catch(err => {
+        message.error(err.response.data.message)
+        setGroupInfo(null)
+        setMessages(null)
+      })
+  }
+    // MAIN FRAME FOR THE CHATCHANNELS
   useEffect(() => {
     getUserGroups()
     return () => {
@@ -61,6 +85,7 @@ const Main = () => {
   }, [])
   
   return (
+    <>
     <Layout
     style={{
       minHeight: '100vh',
@@ -83,9 +108,12 @@ const Main = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Row gutter={[16, 16]}>
-                
-                  <Col span={GroupInfo ? 4 : 1}>
-                    {GroupInfo && <Actions GroupInfo={GroupInfo} />}
+                  <Col span={GroupInfo ? 4 : 4}>
+                    <Actions
+                      GroupInfo={GroupInfo}
+                      setMessages={setMessages}
+                      getUserGroups={getUserGroups}
+                    />
                   </Col>
                 <Col span={4}>  
                   <CreateGroup getUserGroups={getUserGroups} />
@@ -107,7 +135,7 @@ const Main = () => {
                 </Tooltip>
                 </Col>
                 <Col span={4}>
-                  <Avatar icon={<UserOutlined />} />
+                  <UserEdit />
                 </Col>
               </Row>
             </Col>
@@ -119,22 +147,22 @@ const Main = () => {
             overflow: 'initial',
           }}
         >
-          
-          { !Messages && <Empty description={<span>Please Select a <a href="#API">Group</a></span>} />}
+            {GroupInfo && <ChatArea groupID={GroupInfo}/>}
+          {/* { !Messages && <Empty description={<span>Please Select a <a>Group</a> Or create one!</span>} />}
           { Messages &&
              Messages.map(message => <Chat message={message}/>)
-          }
+          } */}
         </Content>
-        <Footer
+        {/* <Footer
           style={{
             textAlign: 'center',
           }}
         >
-          <SendText GroupInfo={GroupInfo} getUserGroupMessages={getUserGroupMessages}/>
-        </Footer>
+            {Messages && GroupInfo && <SendText GroupInfo={GroupInfo.id} getUserGroupMessages={getUserGroupMessages} />}
+        </Footer> */}
     
       </Layout>
     </Layout>
-  );
+    </>);
 };
 export default Main;

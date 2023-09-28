@@ -1,53 +1,81 @@
 import React from 'react';
 import axios from 'axios';
-import { MoreOutlined, SmileOutlined,LeftCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Space,Button } from 'antd';
-import { USERContext } from "../../index";
+import { MenuFoldOutlined, SmileOutlined,LeftCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Space,Button ,message} from 'antd';
+import { USERContext } from "../../_pages/App";
+import UsersList from "./usersList";
 
 
-export default function Actions({ GroupInfo }) {
-    const USER = React.useContext(USERContext);
+export default function Actions({ GroupInfo,setMessages,getUserGroups }) {
+    const {USER} = React.useContext(USERContext);    
       const items = [
-        {
+        GroupInfo &&{
           key: '1',
           label: (
-              <a onClick={(e) => { 
-                e.preventDefault()  
-                  leaveGroup(GroupInfo)
+              <Button
+                type='link'
+                onClick={(e) => { 
+                    e.preventDefault()  
+                  leaveGroup(GroupInfo.id)
               }}>
               Leave Group
-            </a>
+            </Button>
               ),
-          icon: <LeftCircleOutlined />,
+              icon: <LeftCircleOutlined />,
         },
-        {
+        GroupInfo && {
           key: '2',
             label: (
-                <a>
-                    Show Members
-                </a>
+                <UsersList GroupInfo={GroupInfo} />
           ),
+            icon: <SmileOutlined />,
+        },
+        {
+          key: '3',
+            label: (
+                <UsersList GroupInfo={null} />
+          ),
+          icon: <SmileOutlined />,
+        },
+        GroupInfo && {
+          key: '4',
+            label: (
+                <Button type='link' onClick={()=>deleteGroup(GroupInfo)}>Delete Group</Button>
+            ),
+          disabled: GroupInfo === null,
           icon: <SmileOutlined />,
         },
       ];
       
       const leaveGroup = (GID) => {
-          console.log(USER);
           axios.patch(`group/${GID}/leave/${USER.id}/`)
-        .then(res => {
-          console.log(res.data);
-      }).catch(err=>console.log(err.response.data))
+              .then(res => {
+                  setMessages(null)
+                  getUserGroups()
+                  message.success(res.data?.message)
+              })
+              .catch(err => message.error(err.response.data.message))
         // group/<int:group_id>/join/<int:user_id>/
-        // console.log(groupInfo);
+      }
+    const deleteGroup = (GID) => { 
+        if(!GID?.id) return
+        axios.delete(`group/${GID.id}/delete/`)
+        .then(res => {
+            setMessages(null)
+            getUserGroups()
+            message.success(res.data?.message)
+        })
+        .catch(err => message.error(err.response.data.message))
     }
 
     return (
-        <Dropdown menu={{items}}>
+        <>
+        <Dropdown menu={{ items }}>
         {/* <a onClick={(e) => e.preventDefault()}> */}
             <Space>
                 <Button
                     type="text"
-                    icon={<MoreOutlined />}
+                    icon={<MenuFoldOutlined />}
                     style={{
                         fontSize: '16px',
                         width: 64,
@@ -58,5 +86,6 @@ export default function Actions({ GroupInfo }) {
                 </Button>
             </Space>
         {/* </a> */}
-    </Dropdown>
+            </Dropdown>
+    </>
 )}

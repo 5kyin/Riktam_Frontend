@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Col, Row } from 'antd';
+import { Button, Form, Input, Col, Row,Layout } from 'antd';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
@@ -16,8 +16,23 @@ export default function Register(){
     }
     
     return (
-            <Row>
+        <Layout>
+            <Layout.Header><h1 style={{
+                textAlign: "center",
+                marginTop: 0,
+                color: "#fff"
+            }}>Registration</h1></Layout.Header>
+            <Layout>
+                
+                <Layout.Content>
+
+                
+            <Row gutter={[16,16]}>
                 <Col span={8}></Col>
+                <Col span={8}></Col>
+                <Col span={8}></Col>
+                
+                <Col span={8}></Col>    
                 <Col span={8}>
                     <Form
                         onSubmit={e => e.preventDefault()}
@@ -54,10 +69,19 @@ export default function Register(){
                     </Form.Item>
                         <Form.Item>
                             <Button type="primary" htmlType='submit'>Submit</Button>
+                            <Button type="link" onClick={()=>navigate("/")}>login</Button>
                         </Form.Item>
                     </Form>
                 </Col>
                 <Col span={8}></Col>
-            </Row>
+                
+                <Col span={8}></Col>
+                <Col span={8}></Col>
+                <Col span={8}></Col>
+                    </Row>
+                    </Layout.Content>
+                
+                </Layout>
+            </Layout>
         )
     }
