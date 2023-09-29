@@ -6,7 +6,7 @@ import { USERContext } from "../../_pages/App";
 import UsersList from "./usersList";
 
 
-export default function Actions({ GroupInfo,setMessages,getUserGroups }) {
+export default function Actions({ GroupInfo,getUserGroups }) {
     const {USER} = React.useContext(USERContext);    
       const items = [
         GroupInfo &&{
@@ -50,18 +50,20 @@ export default function Actions({ GroupInfo,setMessages,getUserGroups }) {
       const leaveGroup = (GID) => {
           axios.patch(`group/${GID}/leave/${USER.id}/`)
               .then(res => {
-                  setMessages(null)
                   getUserGroups()
                   message.success(res.data?.message)
               })
-              .catch(err => message.error(err.response.data.message))
+            .catch(err => {
+              console.log(err)
+              message.error(err.response.data.message)
+            }
+            )
         // group/<int:group_id>/join/<int:user_id>/
       }
     const deleteGroup = (GID) => { 
         if(!GID?.id) return
         axios.delete(`group/${GID.id}/delete/`)
         .then(res => {
-            setMessages(null)
             getUserGroups()
             message.success(res.data?.message)
         })
@@ -71,8 +73,6 @@ export default function Actions({ GroupInfo,setMessages,getUserGroups }) {
     return (
         <>
         <Dropdown menu={{ items }}>
-        {/* <a onClick={(e) => e.preventDefault()}> */}
-            <Space>
                 <Button
                     type="text"
                     icon={<MenuFoldOutlined />}
@@ -82,10 +82,9 @@ export default function Actions({ GroupInfo,setMessages,getUserGroups }) {
                         height: 64,
                     }}
                 >
-                    Actions
+                    
                 </Button>
-            </Space>
-        {/* </a> */}
-            </Dropdown>
+    
+      </Dropdown>
     </>
 )}

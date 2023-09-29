@@ -1,36 +1,39 @@
 import React, { useEffect } from 'react'
+import { Button, Card ,Space, message} from 'antd';
+import Chat from './chat';
 
-export default function ChatArea({ groupID }) {
-    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${groupID.id}/`); 
-    useEffect(() => {
-      console.log(groupID);
-    // Create a WebSocket connection
-        
-        
-        socket.onopen = (event) => {
-        console.log("WebSocket connection established:", event);
-        };
+export default function ChatArea({ groupID, USER, Socket }) {
+    const [Messages, setMessages] = React.useState([]);
+    Socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        if (data.command === 'existing_message') {
+            setMessages(pv => [...pv, data.message])
+        } else if (data.command === 'like_message') { 
+            // expensive Operation
+            setMessages(pv => pv.map(existingMessage => existingMessage.id === data.message.id ? data.message : existingMessage))
+        } else if (data.command === 'new_message') {
+            setMessages(pv=>[...pv,data.message])
+            setTimeout(() => {
+                document.getElementById(`M_${data.message.id}`).scrollIntoView({ 
+                    behavior: 'smooth' 
+                 })
+            }, 500);
+            
+        }
+    }
 
-        // Event handler when a message is received from the server
-        socket.onmessage = (event) => {
-        const messageData = JSON.parse(event.data);
-        console.log("Received message:", messageData);
-        };
-
-        // Sending a message through WebSocket
-        // const messageData = {
-        // group_id: 1,  // Replace with the ID of the chat group
-        // message: "Hello, this is a test message."
-        // };
-
-        // socket.send(JSON.stringify(messageData));
-
-      return () => {
-        socket.disconnect();
+    useEffect(() => {    
+        return () => {
+            setMessages([])
       }
     }, [groupID])
-    
-  return (
-    <div>chatArea</div>
+
+    useEffect(() => { 
+        return () => {
+      }
+    }, [Messages])
+
+    return (
+         Messages.length > 0 && Messages.map(message => <Chat Socket={Socket} message={message}/>)
   )
 }

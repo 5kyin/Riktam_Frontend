@@ -1,35 +1,34 @@
 import React from 'react'
 import axios from 'axios';
+
+import { USERContext } from "../../_pages/App";
 import { SendOutlined} from '@ant-design/icons';
 import { Button,Input} from 'antd';
 
-export default function SendText({GroupInfo,getUserGroupMessages}) {
+export default function SendText({ Socket }) {
+    const inputRef = React.useRef(null);
+    const {USER} = React.useContext(USERContext);    
+    const [inputValue, setInputValue] = React.useState('');
+
     const [Text, setText] = React.useState("");
 
     const sendTextMessage = (text) => {
-        // group/GroupInfo/messages/
-        console.log(text.length !== 0);
         if (text.length === 0) return 
-        if (text.length !== 0) { 
-            const textdata = {
-                "content": text,
-            }
-
-            axios.post(`/group/${GroupInfo}/messages/`, textdata)
-               .then(res => {getUserGroupMessages({ key: GroupInfo })})
-               .catch(err => err)
-               .finally(()=>setText(""))
+            const messageData = {
+                content: text,
+                sender: USER.id,
+                command:'send_group_messages',
+            };
+        Socket.send(JSON.stringify(messageData));
+        setInputValue('');
         }
-    }
-    return (
-        <Input
-            id="Main-Chat-Input"
-            allowClear
-            defaultValue={Text}
-            onChange={(e) => {
-                setText(e.target.value)
-            }}
-          onPressEnter={(e)=>sendTextMessage(e.target.value)}
-          suffix={<Button disabled={Text.length === 0 } onClick={()=>sendTextMessage(Text)} type="primary" shape="circle" size='medium' icon={<SendOutlined />} />} />
+    return (<>
+        <Input value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onPressEnter={() => sendTextMessage(inputValue)}
+            suffix={<Button disabled={false} onClick={()=>sendTextMessage(inputValue)} type="primary" shape="circle" size='medium' icon={<SendOutlined />} />}
+        />
+        
+    </>
   )
 }
